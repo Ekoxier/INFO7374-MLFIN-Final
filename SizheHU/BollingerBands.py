@@ -21,10 +21,9 @@ buyers = bb[bb['Close'] <= bb['lower']]
 sellers = bb[bb['Close'] >= bb['upper']]
 
 # Plotting
-if_plot = False
+if_plot = True
 if(if_plot):
     pio.templates.default = "plotly_dark"
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=lower_band.index, 
                             y=lower_band['lower'], 

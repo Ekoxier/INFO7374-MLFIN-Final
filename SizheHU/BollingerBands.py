@@ -1,20 +1,27 @@
-import yfinance as yf
 import plotly.io as pio
 import plotly.graph_objects as go
 
-equity = yf.Ticker("AAPL")
-data = equity.history(period='1y')
-df = data[['Close']]
+import numpy as np
+import pandas as pd
+# from pandas_datareader import DataReader
+from datetime import datetime
+import matplotlib.pyplot as plt
+import yfinance as yf
 
-sma = df.rolling(window=20).mean().dropna()
-rstd = df.rolling(window=20).std().dropna()
+start_date = datetime(2020, 1, 1)
+end_date = datetime(2023, 1, 1)
+TSLA_data = yf.download('TSLA', start_date, end_date)
+TSLA_close = TSLA_data['Adj Close']
+TSLA_close = TSLA_close.rename(columns={'Adj Close': 'Close'})
+TSLA_sma = TSLA_data['Adj Close'].rolling(window=20).mean().dropna()
+TSLA_rstd = TSLA_data['Adj Close'].rolling(window=20).std().dropna()
 
-upper_band = sma + 2 * rstd
-lower_band = sma - 2 * rstd
+upper_band = TSLA_sma + 2 * TSLA_rstd
+lower_band = TSLA_sma - 2 * TSLA_rstd
 
-upper_band = upper_band.rename(columns={'Close': 'upper'})
-lower_band = lower_band.rename(columns={'Close': 'lower'})
-bb = df.join(upper_band).join(lower_band)
+upper_band = upper_band.rename(columns={'Adj Close': 'upper'})
+lower_band = lower_band.rename(columns={'Adj Close': 'lower'})
+bb = TSLA_close.join(upper_band).join(lower_band)
 bb = bb.dropna()
 
 buyers = bb[bb['Close'] <= bb['lower']]
@@ -23,6 +30,23 @@ sellers = bb[bb['Close'] >= bb['upper']]
 # Plotting
 if_plot = True
 if(if_plot):
+    plt.scatter(x=lower_band.index, 
+                            y=lower_band['lower'], 
+                            name='Lower Band', 
+                            line_color='rgba(173,204,255,0.2)'
+                            )
+    plt.scatter(x=upper_band.index, 
+                            y=upper_band['upper'], 
+                            name='Upper Band', 
+                            fill='tonexty', 
+                            fillcolor='rgba(173,204,255,0.2)', 
+                            line_color='rgba(173,204,255,0.2)'
+                            )
+    plt.scatter(x=df.index, 
+                            y=df['Close'], 
+                            name='Close', 
+                            line_color='#636EFA'
+                            )
     pio.templates.default = "plotly_dark"
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=lower_band.index, 
@@ -68,12 +92,12 @@ if(if_plot):
     fig.show()
 
 
-# current_value = bb['Close'][-1]
-# upper_bound = bb['upper'][-1]
-# lower_bound = bb['lower'][-1]
-# if current_value > upper_bound:
-#     message = 'Sell indicator'
-# elif current_value < lower_bound:
-#     message = 'Buy indicator'
-# else:
-#     message = False
+current_value = bb['Close'][-1]
+upper_bound = bb['upper'][-1]
+lower_bound = bb['lower'][-1]
+if current_value > upper_bound:
+    message = 'Sell indicator'
+elif current_value < lower_bound:
+    message = 'Buy indicator'
+else:
+    message = False

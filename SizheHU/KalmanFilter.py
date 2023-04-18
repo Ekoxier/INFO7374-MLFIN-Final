@@ -9,12 +9,12 @@ from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 import yfinance as yf
-
+import TradingStrats as ts
 # extract data from various Internet sources into a pandas DataFrame
 import pandas_datareader as pd
 start = datetime.datetime(2020, 1, 1)
 end = datetime.datetime(2023, 1, 1)
-tsla = yf.download('TSLA', start, end) 
+tsla_data = yf.download('TSLA', start, end) 
 def Kalman_Filter(Y):
     S = Y.shape[0]
     S = S + 1
@@ -87,16 +87,18 @@ def Kalman_Smoother(params, Y):
     u_smooth = u_smooth[0:-1]
     return u_smooth
 
-Y = tsla['Open']
+Y = tsla_data['Adj Close']
 T = Y.shape[0]
 param0 = np.array([0.3, 0.9, 0.8, 1.1])
 param_star = minimize(Kalman_Filter, param0, method='BFGS', options={'xtol': 1e-8, 'disp': True})
-u = Kalman_Smoother(param_star.x, Y)
+Y_predicted = Kalman_Smoother(param_star.x, Y)
 timevec = np.linspace(1,T,T)
 fig= plt.figure(figsize=(10,6))
 
 plt.plot(timevec, Y,'r-', label='Actual')
-plt.plot(timevec, u,'b:', label='Predicted')
+plt.plot(timevec, Y_predicted,'b:', label='Predicted')
 plt.legend()
-plt.title("Kalman Filtering")
+plt.title("Kalman Filter")
 plt.show()
+
+ts.trading_strat_day_trade(Y_predicted,Y)

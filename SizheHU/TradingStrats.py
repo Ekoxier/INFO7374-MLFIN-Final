@@ -4,9 +4,9 @@ def trading_strat_day_trade(Y_predicted,Y):
     T = Y.size()
     signal =  np.zeros(T)
     for t in range(0, T):
-        if Y_predicted[t] > Y[t]:
+        if Y_predicted[t] > Y[t-1]:
             signal[t] = 1  # long signal
-        elif Y_predicted[t] < Y[t]:
+        elif Y_predicted[t] < Y[t-1]:
             signal[t] = -1  # short signal
     return signal
 

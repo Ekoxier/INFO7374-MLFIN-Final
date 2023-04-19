@@ -1,29 +1,36 @@
+
 import numpy as np
 
-def trading_strat_day_trade(Y_predicted,Y):
-    T = Y.size()
-    signal =  np.zeros(T)
-    for t in range(0, T):
-        if Y_predicted[t] > Y[t-1]:
-            signal[t] = 1  # long signal
-        elif Y_predicted[t] < Y[t-1]:
-            signal[t] = -1  # short signal
+'BUY HOLD'
+def trading_rule_1(p):
+    T = len(p)
+    signal = np.zeros(T,1);
+    signal[0] = 1
+    signal[T-1] = -1
     return signal
 
+'LONG SHORT'
+def trading_rule_2(p_hat, p):
+    T = len(p)
+    signal = np.zeros(T,1)
+    for t in range(T):
+        if p_hat(t-1) > p(t-1) and p_hat(t) < p(t):
+            # FORCAST > OPEN: LONG
+            signal[t] = 1
+        elif p_hat(t-1) < p(t-1) and p_hat(t) > p(t):
+            # FORECAST < OPEN: SHORT
+            signal[t] = -1
+    return signal
 
-def trading_strat_long_short(Y_predicted,Y):
-    T = Y.size()
-    signal =  np.zeros(T)
-    position = np.zeros(T)
-    for t in range(0, T):
-        if Y_predicted[t] > Y[t]:
-            signal[t] = 1  
-        elif Y_predicted[t] < Y[t]:
-            signal[t] = -1  
-    for t in range(0, T):
-        if t == 0:
-            position[t] = signal[t]
-        elif signal[t] != signal[t-1]: 
-            # take the first long/short signal as position
-            position[t] = signal[t] 
-    return position
+'DAY TRADE'
+def trading_rule_3(p_hat, p):
+    T = len(p)
+    signal = np.zeros(T,1)
+    for t in range(T):
+        if p_hat(t)> p(t):
+        # FORCAST > OPEN: LONG
+            signal[t] = 1
+        elif p_hat(t)< p(t): 
+            #FORECAST < OPEN: SHORT
+            signal[t] = -1
+    return signal

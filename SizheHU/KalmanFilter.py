@@ -85,14 +85,14 @@ def Kalman_Smoother(params, Y, *args):
  u_smooth = u_smooth[1:-1]
  return u_smooth
 
-start_date = datetime(2020,1,1)
-end_date = datetime(2023,1,1)
+start_date = datetime(2021,1,1)
+end_date = datetime(2022,12,31)
 TSLA = yf.download('TSLA',start_date, end_date)
 Y = TSLA['Adj Close'].values
 T = Y.size;
-# param0 = np.array([1.5, 1.35, 130*np.std(Y), 200*np.std(Y)])
+param0 = np.array([1.5, 1.35, 230*np.std(Y), 200*np.std(Y)])
 # [0.5, 0.3, 0.6, 0.8]
-param0 = np.array([0.4, 0.4, 0.5, 0.8])
+# param0 = np.array([0.395, 0.395, 0.6, 0.8])
 param_star = minimize(Kalman_Filter, param0, method='BFGS', options={'xtol': 1e-8, 'disp': True})
 u = Kalman_Smoother(param_star.x,Y)
 timevec = np.linspace(2,T-1,T-2)
@@ -106,7 +106,7 @@ data = pd.DataFrame({'Actual':list(Y[1:-1]),
                      'Open': TSLA['Open'][1: -1]})
 # Day Trading
 
-for index, row in data:
+for index,row in data.iterrows():
   if data['Predicted'][index] > data['Actual'][index - 1]:
     # Long: Buy at open, Sell at the end.
     pass

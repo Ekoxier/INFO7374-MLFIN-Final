@@ -22,7 +22,7 @@ new_data['signal'] = new_data['comparison'].diff()
 # A buy signal is produced when the shorter average crosses above the longer.
 # A sell signal is produced when the shorter averages moves below the longer average
 # print(new_data)
-if_plot = False
+if_plot = True
 if (if_plot):
     plt.figure(figsize=(10, 6))
     new_data['close'].plot(color='k', label='Daily close price')

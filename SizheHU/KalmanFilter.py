@@ -85,31 +85,30 @@ def Kalman_Smoother(params, Y, *args):
  u_smooth = u_smooth[1:-1]
  return u_smooth
 
-start_date = datetime(2021,1,1)
-end_date = datetime(2022,12,31)
-TSLA = yf.download('TSLA',start_date, end_date)
-Y = TSLA['Adj Close'].values
+start_date = datetime(2020,1,1)
+end_date = datetime(2023,1,1)
+tsla = yf.download('TSLA',start_date, end_date)
+Y = tsla['Adj Close'].values
+
 T = Y.size;
-param0 = np.array([1.5, 1.35, 230*np.std(Y), 200*np.std(Y)])
-# [0.5, 0.3, 0.6, 0.8]
-# param0 = np.array([0.395, 0.395, 0.6, 0.8])
+param0 = np.array([0.395, 0.3932, 0.6, 0.8])
 param_star = minimize(Kalman_Filter, param0, method='BFGS', options={'xtol': 1e-8, 'disp': True})
 u = Kalman_Smoother(param_star.x,Y)
 timevec = np.linspace(2,T-1,T-2)
-plt.plot(timevec, u[1:],'r',timevec, Y[1:-1],'b:')
-# plt.show()
+
 RMSE = np.sqrt(np.mean((u[1:] - Y[1:-1])**2))
 print('RMSE values is:', RMSE)
 
 data = pd.DataFrame({'Actual':list(Y[1:-1]),
                      'Predicted':list(u[1:]),
-                     'Open': TSLA['Open'][1: -1]})
-# Day Trading
+                     'Open': tsla['Open'][1: -1]})
+print(data.head(10))
 
-for index,row in data.iterrows():
-  if data['Predicted'][index] > data['Actual'][index - 1]:
-    # Long: Buy at open, Sell at the end.
-    pass
-  if data['Predicted'][index] < data['Actual'][index - 1]:
-    # Short: Sell at open, Buy at the end.
-    pass
+plt.figure(figsize=(17,7))
+plt.title('Kalman Filter')
+plt.xlabel('Days')
+plt.ylabel('Price')
+plt.plot(timevec, u[1:],'r', label='Predicted Close Price')
+plt.plot(timevec, Y[1:-1],'k:', label='Actual Close Price')
+plt.legend()
+plt.show()

@@ -1,103 +1,40 @@
-import plotly.io as pio
-import plotly.graph_objects as go
-
 import numpy as np
 import pandas as pd
-# from pandas_datareader import DataReader
-from datetime import datetime
 import matplotlib.pyplot as plt
 import yfinance as yf
+from datetime import datetime
+
+def get_sma(prices, rate):
+    return prices.rolling(rate).mean()
+
+def get_bollinger_bands(prices, rate=20):
+    sma = get_sma(prices, rate)
+    std = prices.rolling(rate).std()
+    bollinger_up = sma + std * 2 # Calculate top band
+    bollinger_down = sma - std * 2 # Calculate bottom band
+    return bollinger_up, bollinger_down
 
 start_date = datetime(2020, 1, 1)
 end_date = datetime(2023, 1, 1)
-TSLA_data = yf.download('TSLA', start_date, end_date)
-TSLA_close = TSLA_data['Adj Close']
-TSLA_close = TSLA_close.rename(columns={'Adj Close': 'Close'})
-TSLA_sma = TSLA_data['Adj Close'].rolling(window=20).mean().dropna()
-TSLA_rstd = TSLA_data['Adj Close'].rolling(window=20).std().dropna()
+tsla_data = yf.download('TSLA', start_date, end_date)
 
-upper_band = TSLA_sma + 2 * TSLA_rstd
-lower_band = TSLA_sma - 2 * TSLA_rstd
+closing_prices = tsla_data['Adj Close']
 
-upper_band = upper_band.rename(columns={'Adj Close': 'upper'})
-lower_band = lower_band.rename(columns={'Adj Close': 'lower'})
-bb = TSLA_close.join(upper_band).join(lower_band)
-bb = bb.dropna()
-
-buyers = bb[bb['Close'] <= bb['lower']]
-sellers = bb[bb['Close'] >= bb['upper']]
-
-# Plotting
-if_plot = True
-if(if_plot):
-    plt.scatter(x=lower_band.index, 
-                            y=lower_band['lower'], 
-                            name='Lower Band', 
-                            line_color='rgba(173,204,255,0.2)'
-                            )
-    plt.scatter(x=upper_band.index, 
-                            y=upper_band['upper'], 
-                            name='Upper Band', 
-                            fill='tonexty', 
-                            fillcolor='rgba(173,204,255,0.2)', 
-                            line_color='rgba(173,204,255,0.2)'
-                            )
-    plt.scatter(x=df.index, 
-                            y=df['Close'], 
-                            name='Close', 
-                            line_color='#636EFA'
-                            )
-    pio.templates.default = "plotly_dark"
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=lower_band.index, 
-                            y=lower_band['lower'], 
-                            name='Lower Band', 
-                            line_color='rgba(173,204,255,0.2)'
-                            ))
-    fig.add_trace(go.Scatter(x=upper_band.index, 
-                            y=upper_band['upper'], 
-                            name='Upper Band', 
-                            fill='tonexty', 
-                            fillcolor='rgba(173,204,255,0.2)', 
-                            line_color='rgba(173,204,255,0.2)'
-                            ))
-    fig.add_trace(go.Scatter(x=df.index, 
-                            y=df['Close'], 
-                            name='Close', 
-                            line_color='#636EFA'
-                            ))
-    fig.add_trace(go.Scatter(x=sma.index, 
-                            y=sma['Close'], 
-                            name='SMA', 
-                            line_color='#FECB52'
-                            ))
-    fig.add_trace(go.Scatter(x=buyers.index, 
-                            y=buyers['Close'], 
-                            name='Buyers', 
-                            mode='markers',
-                            marker=dict(
-                                color='#00CC96',
-                                size=10,
-                                )
-                            ))
-    fig.add_trace(go.Scatter(x=sellers.index, 
-                            y=sellers['Close'], 
-                            name='Sellers', 
-                            mode='markers', 
-                            marker=dict(
-                                color='#EF553B',
-                                size=10,
-                                )
-                            ))
-    fig.show()
-
-
-current_value = bb['Close'][-1]
-upper_bound = bb['upper'][-1]
-lower_bound = bb['lower'][-1]
-if current_value > upper_bound:
-    message = 'Sell indicator'
-elif current_value < lower_bound:
-    message = 'Buy indicator'
-else:
-    message = False
+bollinger_up, bollinger_down = get_bollinger_bands(closing_prices)
+final_data = pd.DataFrame({'Close':closing_prices,'Upper':bollinger_up,'Lower':bollinger_down}).dropna()
+final_data['buy_signal'] = np.where(final_data['Close'] <= final_data['Lower'],1,0)
+final_data['sell_signal'] = np.where(final_data['Close'] >= final_data['Upper'],1,0)
+print(final_data)
+plt.figure(figsize=(17,7))
+plt.title('Bollinger Bands')
+plt.xlabel('Days')
+plt.ylabel('Closing Prices')
+plt.plot(final_data['Close'],'k', label='Close Price')
+plt.plot(final_data['Upper'], 'g',label='Upper')
+plt.plot(final_data['Lower'], 'y',label='Lower')
+plt.plot(final_data[final_data['buy_signal'] == 1].index, 
+         final_data['Close'][final_data['buy_signal'] == 1],'o', markersize=3, color='r', label='Buy')
+plt.plot(final_data[final_data['sell_signal'] == 1].index, 
+         final_data['Close'][final_data['sell_signal'] == 1],'o', markersize=3, color='b', label='Sell')
+plt.legend()
+plt.show()

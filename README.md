@@ -1,7 +1,7 @@
 # INFO7374-MLFIN-Final
 Machine Learning in Finance
 
-- Garch & Garch-t
+- Garch 
 - Kalman Filter(https://www.kalmanfilter.net/background2.html)
 - Moving averages
 - Linear Regression
